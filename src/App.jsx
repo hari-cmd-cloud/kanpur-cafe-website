@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { supabase } from "./supabase";
+import emailjs from "@emailjs/browser";
 
 const MENU_DATA = {
   Coffee: [
@@ -1003,6 +1004,24 @@ function ReservationPage() {
         alert("Reservation save failed");
         return;
       }
+
+      await emailjs.send(
+        "service_bcmk4ol",
+        "template_1w0mqza",
+        {
+          name: form.name,
+          phone: form.phone,
+          email: form.email,
+          date: form.date,
+          time: form.time,
+          guests: form.guests,
+          seating: form.seating,
+          special: form.special || "None",
+        },
+        {
+          publicKey: "_hrbqtl462n0KvsAU",
+        },
+      );
 
       setStep(3);
     } catch (err) {
