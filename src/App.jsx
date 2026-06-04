@@ -717,60 +717,220 @@ function MenuPage({ addToCart }) {
 
 // ── GALLERY PAGE ──────────────────────────────────────────────────────────────
 function GalleryPage() {
+  const [dbGallery, setDbGallery] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchGallery = async () => {
+      const { data, error } = await supabase
+        .from("gallery")
+        .select("*")
+        .order("id", { ascending: true });
+
+      if (error) {
+        console.error("Gallery fetch error:", error);
+      } else {
+        setDbGallery(data || []);
+      }
+
+      setLoading(false);
+    };
+
+    fetchGallery();
+  }, []);
   const [filter, setFilter] = useState("All");
   const [lightbox, setLightbox] = useState(null);
   const cats = ["All", "Food", "Drinks", "Interior", "Birthday", "Couple", "Events"];
-  const items = GALLERY_ITEMS.concat(GALLERY_ITEMS).map((g, i) => ({ ...g, id: i }));
+  const items = dbGallery.map((g) => ({
+    id: g.id,
+    cat: "Gallery",
+    label: g.title || "Cafe Moment",
+    image_url: g.image_url,
+    h: "tall",
+  }));
   const filtered = filter === "All" ? items : items.filter(g => g.cat === filter);
 
   return (
     <div style={{ background: "#0F0F0F", minHeight: "100vh", paddingTop: 80 }}>
-      <div style={{ padding: "60px 5%", textAlign: "center", borderBottom: "1px solid rgba(200,155,60,0.1)", background: "linear-gradient(180deg, #1a0f05 0%, #0F0F0F 100%)" }}>
+      <div
+        style={{
+          padding: "60px 5%",
+          textAlign: "center",
+          borderBottom: "1px solid rgba(200,155,60,0.1)",
+          background: "linear-gradient(180deg, #1a0f05 0%, #0F0F0F 100%)",
+        }}
+      >
         <SectionLabel>Visual Stories</SectionLabel>
         <SectionHeading>Gallery</SectionHeading>
         <GoldDivider />
       </div>
       <div style={{ padding: "40px 5%", maxWidth: 1200, margin: "0 auto" }}>
-        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 40 }}>
-          {cats.map(c => (
-            <button key={c} onClick={() => setFilter(c)} style={{
-              fontFamily: "'Poppins',sans-serif", fontSize: 12, letterSpacing: "0.08em", textTransform: "uppercase",
-              background: filter === c ? "#C89B3C" : "transparent", color: filter === c ? "#0F0F0F" : "#F5F1EA",
-              border: `1px solid ${filter === c ? "#C89B3C" : "rgba(245,241,234,0.2)"}`,
-              padding: "8px 18px", cursor: "pointer", borderRadius: 2, transition: "all 0.2s",
-            }}>{c}</button>
+        <div
+          style={{
+            display: "flex",
+            gap: 8,
+            flexWrap: "wrap",
+            marginBottom: 40,
+          }}
+        >
+          {cats.map((c) => (
+            <button
+              key={c}
+              onClick={() => setFilter(c)}
+              style={{
+                fontFamily: "'Poppins',sans-serif",
+                fontSize: 12,
+                letterSpacing: "0.08em",
+                textTransform: "uppercase",
+                background: filter === c ? "#C89B3C" : "transparent",
+                color: filter === c ? "#0F0F0F" : "#F5F1EA",
+                border: `1px solid ${filter === c ? "#C89B3C" : "rgba(245,241,234,0.2)"}`,
+                padding: "8px 18px",
+                cursor: "pointer",
+                borderRadius: 2,
+                transition: "all 0.2s",
+              }}
+            >
+              {c}
+            </button>
           ))}
         </div>
-        <div style={{ columns: "repeat(auto-fill, minmax(240px, 1fr))", columnGap: 10 }}>
+        <div
+          style={{
+            columns: "repeat(auto-fill, minmax(240px, 1fr))",
+            columnGap: 10,
+          }}
+        >
           {filtered.map((item) => (
-            <div key={item.id} onClick={() => setLightbox(item)} style={{
-              breakInside: "avoid", marginBottom: 10,
-              background: "#1A1A1A", border: "1px solid rgba(200,155,60,0.1)",
-              height: item.h === "tall" ? 300 : 200,
-              display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
-              cursor: "pointer", overflow: "hidden", position: "relative", transition: "transform 0.3s",
-            }}
-              onMouseEnter={e => { e.currentTarget.style.transform = "scale(1.02)"; }}
-              onMouseLeave={e => { e.currentTarget.style.transform = ""; }}
+            <div
+              key={item.id}
+              onClick={() => setLightbox(item)}
+              style={{
+                breakInside: "avoid",
+                marginBottom: 10,
+                background: "#1A1A1A",
+                border: "1px solid rgba(200,155,60,0.1)",
+                height: item.h === "tall" ? 300 : 200,
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "center",
+                cursor: "pointer",
+                overflow: "hidden",
+                position: "relative",
+                transition: "transform 0.3s",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = "scale(1.02)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = "";
+              }}
             >
-              <span style={{ fontSize: 56, marginBottom: 8 }}>{item.emoji}</span>
-              <p style={{ fontFamily: "'Poppins',sans-serif", fontSize: 11, color: "rgba(245,241,234,0.5)", textTransform: "uppercase", letterSpacing: "0.12em" }}>{item.label}</p>
-              <span style={{ position: "absolute", top: 10, right: 10, background: "#C89B3C", color: "#0F0F0F", fontSize: 10, fontFamily: "'Poppins',sans-serif", fontWeight: 700, padding: "3px 8px", borderRadius: 2 }}>{item.cat}</span>
+              {item.image_url ? (
+                <img
+                  src={item.image_url}
+                  alt={item.label}
+                  style={{
+                    width: "100%",
+                    height: "100%",
+                    objectFit: "cover",
+                    position: "absolute",
+                    inset: 0,
+                  }}
+                />
+              ) : (
+                <span style={{ fontSize: 56, marginBottom: 8 }}>
+                  {item.emoji}
+                </span>
+              )}
+              <p
+                style={{
+                  fontFamily: "'Poppins',sans-serif",
+                  fontSize: 11,
+                  color: "rgba(245,241,234,0.5)",
+                  textTransform: "uppercase",
+                  letterSpacing: "0.12em",
+                }}
+              >
+                {item.label}
+              </p>
+              <span
+                style={{
+                  position: "absolute",
+                  top: 10,
+                  right: 10,
+                  background: "#C89B3C",
+                  color: "#0F0F0F",
+                  fontSize: 10,
+                  fontFamily: "'Poppins',sans-serif",
+                  fontWeight: 700,
+                  padding: "3px 8px",
+                  borderRadius: 2,
+                }}
+              >
+                {item.cat}
+              </span>
             </div>
           ))}
         </div>
       </div>
       {/* Lightbox */}
       {lightbox && (
-        <div onClick={() => setLightbox(null)} style={{
-          position: "fixed", inset: 0, background: "rgba(0,0,0,0.92)", zIndex: 2000,
-          display: "flex", alignItems: "center", justifyContent: "center",
-        }}>
-          <div style={{ background: "#1A1A1A", border: "1px solid rgba(200,155,60,0.3)", padding: "60px 80px", textAlign: "center", maxWidth: 480 }}>
+        <div
+          onClick={() => setLightbox(null)}
+          style={{
+            position: "fixed",
+            inset: 0,
+            background: "rgba(0,0,0,0.92)",
+            zIndex: 2000,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          <div
+            style={{
+              background: "#1A1A1A",
+              border: "1px solid rgba(200,155,60,0.3)",
+              padding: "60px 80px",
+              textAlign: "center",
+              maxWidth: 480,
+            }}
+          >
             <span style={{ fontSize: 100 }}>{lightbox.emoji}</span>
-            <h3 style={{ fontFamily: "'Playfair Display',serif", color: "#F5F1EA", fontSize: 24, marginTop: 20 }}>{lightbox.label}</h3>
-            <p style={{ fontFamily: "'Poppins',sans-serif", color: "#C89B3C", fontSize: 12, letterSpacing: "0.12em", textTransform: "uppercase", marginTop: 8 }}>{lightbox.cat}</p>
-            <p style={{ fontFamily: "'Poppins',sans-serif", color: "rgba(245,241,234,0.4)", fontSize: 12, marginTop: 24 }}>Click anywhere to close</p>
+            <h3
+              style={{
+                fontFamily: "'Playfair Display',serif",
+                color: "#F5F1EA",
+                fontSize: 24,
+                marginTop: 20,
+              }}
+            >
+              {lightbox.label}
+            </h3>
+            <p
+              style={{
+                fontFamily: "'Poppins',sans-serif",
+                color: "#C89B3C",
+                fontSize: 12,
+                letterSpacing: "0.12em",
+                textTransform: "uppercase",
+                marginTop: 8,
+              }}
+            >
+              {lightbox.cat}
+            </p>
+            <p
+              style={{
+                fontFamily: "'Poppins',sans-serif",
+                color: "rgba(245,241,234,0.4)",
+                fontSize: 12,
+                marginTop: 24,
+              }}
+            >
+              Click anywhere to close
+            </p>
           </div>
         </div>
       )}
