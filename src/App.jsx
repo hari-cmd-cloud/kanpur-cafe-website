@@ -618,11 +618,42 @@ function MenuCard({ item, addToCart, full = false }) {
 
 // ── MENU PAGE ─────────────────────────────────────────────────────────────────
 function MenuPage({ addToCart }) {
+  const [dbItems, setDbItems] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchMenu = async () => {
+      const { data, error } = await supabase
+        .from("menu_items")
+        .select("*")
+        .eq("available", true)
+        .order("id", { ascending: true });
+
+      if (error) {
+        console.error("Menu fetch error:", error);
+      } else {
+        setDbItems(data || []);
+      }
+
+      setLoading(false);
+    };
+
+    fetchMenu();
+  }, []);
   const [cat, setCat] = useState("All");
   const [search, setSearch] = useState("");
 
-  const cats = ["All", ...Object.keys(MENU_DATA)];
-  const allItems = Object.entries(MENU_DATA).flatMap(([c, items]) => items.map(i => ({ ...i, cat: c })));
+  const cats = ["All", ...new Set(dbItems.map((item) => item.category))];
+
+  const allItems = dbItems.map((item) => ({
+    id: item.id,
+    name: item.name,
+    desc: item.description,
+    price: item.price,
+    cat: item.category,
+    image_url: item.image_url,
+    tag: item.available ? "" : "Unavailable",
+  }));
   const filtered = allItems.filter(i =>
     (cat === "All" || i.cat === cat) &&
     (!search || i.name.toLowerCase().includes(search.toLowerCase()) || i.desc.toLowerCase().includes(search.toLowerCase()))
